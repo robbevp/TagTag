@@ -16,9 +16,9 @@ module Tagger
 
     def self.generate_toplevel(to: STDOUT)
       to.write(CLI::UI.fmt(<<~HELP))
-        {{bold:{{command:#{Tagger.TOOL_NAME}}} inspects the contents of audio files.}}
-        It basically only has one command: {{command:#{Tagger.TOOL_NAME} inspect}}.
-        See {{command:#{Tagger.TOOL_NAME} inspect --help}} for more information.
+        {{bold:{{command:#{TOOL_NAME}}} inspects the contents of audio files.}}
+        It basically only has one command: {{command:#{TOOL_NAME} inspect}}.
+        See {{command:#{TOOL_NAME} inspect --help}} for more information.
       HELP
 
       cmds = Tagger::Commands::Registry.resolved_commands.map do |name, klass|
