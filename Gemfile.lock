@@ -1,0 +1,27 @@
+GIT
+  remote: https://github.com/Shopify/cli-kit.git
+  revision: aeeb58b05ee920f324106fc7ebfce7949dfb6f02
+  branch: main
+  specs:
+    cli-kit (4.0.0)
+      cli-ui (>= 1.1.4)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    cli-ui (1.5.1)
+    wahwah (1.3.0)
+
+PLATFORMS
+  arm64-darwin-20
+  arm64-darwin-21
+
+DEPENDENCIES
+  cli-kit!
+  wahwah (~> 1.3)
+
+RUBY VERSION
+   ruby 3.1.1p18
+
+BUNDLED WITH
+   2.3.7
