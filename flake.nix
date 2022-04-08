@@ -13,16 +13,14 @@
     };
   };
 
-  outputs = inputs@{ self, nixpkgs, flake-utils, ... }:
-    let
-      inherit (flake-utils.lib) eachDefaultSystem eachSystem;
-    in
-    eachDefaultSystem (system:
+  outputs = { self, nixpkgs, flake-utils, devshell, ... }:
+    flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [ inputs.devshell.overlay ];
+          overlays = [ devshell.overlay ];
         };
+        src = pkgs.lib.cleanSourceWith { filter = name: type: !(builtins.elem name [ ".github" "flake.lock" "flake.nix" ]); src = ./.; name = "source"; };
         gems = pkgs.bundlerEnv rec {
           name = "tagtag-env";
           ruby = pkgs.ruby_3_1;
@@ -31,6 +29,9 @@
           gemset = ./gemset.nix;
           groups = [ "default" "development" "test" "production" ];
         };
+        script = pkgs.writeShellScriptBin "tagger" ''
+          ${gems}/bin/bundle exec ${src}/exe/tagger "$@"
+        '';
       in
       {
         devShell = pkgs.devshell.mkShell {
@@ -39,8 +40,11 @@
             gems
             (pkgs.lowPrio gems.wrappedRuby)
             pkgs.bundix
+            script
           ];
         };
+
+        defaultPackage = script;
       }
     );
 }
