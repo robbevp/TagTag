@@ -1,5 +1,6 @@
 require 'tagger'
 require 'wahwah'
+require 'pathname'
 
 module Tagger
   module Commands
@@ -13,8 +14,8 @@ module Tagger
       example('~/Music/The Microphones/The Glow Pt.2/01 I Want Wind to Blow.flac', "inspect the tags in 'I want wind to blow'")
 
       class Opts < CLI::Kit::Opts
-        def file
-          position!
+        def files
+          rest
         end
 
         def full
@@ -23,31 +24,43 @@ module Tagger
       end
 
       def invoke(opts, _name)
-        tag = WahWah.open(opts.file)
+        if opts.files.length == 0
+          STDERR.puts CLI::UI.fmt("{{red:Please pass at least one file to inspect.}}")
+          exit!
+        end
+
+        opts.files.each do |file|
+          items = get_track_info(file, full: opts.full)
+          max_len = items.map(&:first).map(&:length).max
+          
+          CLI::UI::Frame.open(file.split('/').last, frame_style: :bracket, timing: nil) do
+            items.each do |name, value|
+              STDOUT.write(CLI::UI.fmt("{{command:#{name.ljust(max_len)}}}  #{value}\n"))
+            end
+          end
+        end
+      end
+
+      def get_track_info(file, full: false)
+        tag = WahWah.open(file)
         track_info = "#{tag.track} #{"(out of #{tag.track_total})" unless tag.track_total.nil?}"
         
         items = []
-        items << ["Nr", track_info] if tag.track || opts.full
-        items << ["Title", tag.title] if tag.title || opts.full
-        items << ["Artist", tag.artist] if tag.artist || opts.full
-        items << ["Composer", tag.composer] if tag.composer || opts.full
-        items << ["Album", tag.album] if tag.album || opts.full
-        items << ["Date", tag.year] if tag.year || opts.full
-        items << ["Album artist", tag.albumartist] if tag.albumartist || opts.full
-        items << ["Genre", tag.genre] if tag.genre || opts.full
+        items << ["Nr", track_info] if tag.track || full
+        items << ["Title", tag.title] if tag.title || full
+        items << ["Artist", tag.artist] if tag.artist || full
+        items << ["Composer", tag.composer] if tag.composer || full
+        items << ["Album", tag.album] if tag.album || full
+        items << ["Date", tag.year] if tag.year || full
+        items << ["Album artist", tag.albumartist] if tag.albumartist || full
+        items << ["Genre", tag.genre] if tag.genre || full
         items << ["", ""] # Add an empty line before technical info
         items << ["Duration", "#{(tag.duration / 60).round}m #{(tag.duration % 60).round}s"]
-        items << ["Type", opts.file.split('.').last]
+        items << ["Type", file.split('.').last]
         items << ["Sample rate", tag.sample_rate == 44100 ? 44.1 : (tag.sample_rate / 1000)]
         items << ["Bit depth", tag.bit_depth] if tag.bit_depth 
 
-        max_len = items.map(&:first).map(&:length).max
-        
-        CLI::UI::Frame.open(opts.file.split('/').last, frame_style: :bracket, timing: nil) do
-          items.each do |name, value|
-            STDOUT.write(CLI::UI.fmt("{{command:#{name.ljust(max_len)}}}  #{value}\n"))
-          end
-        end
+        items
       end
     end
   end
